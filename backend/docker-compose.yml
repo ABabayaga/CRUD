@@ -1,0 +1,23 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  api:
+    build: .
+    container_name: api
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3002:3002"
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:

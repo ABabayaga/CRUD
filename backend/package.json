@@ -1,0 +1,40 @@
+{
+    "name": "nest-mongo-login",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "start": "nest start",
+        "start:dev": "nest start --watch",
+        "build": "nest build",
+        "lint": "eslint \"src/**/*.{ts,tsx}\""
+    },
+    "dependencies": {
+        "@nestjs/common": "^10.0.0",
+        "@nestjs/config": "^4.0.2",
+        "@nestjs/core": "^10.0.0",
+        "@nestjs/mapped-types": "^2.1.0",
+        "@nestjs/mongoose": "^10.0.0",
+        "@nestjs/platform-express": "^10.4.20",
+        "bcrypt": "^6.0.0",
+        "bcryptjs": "^3.0.2",
+        "class-transformer": "^0.5.1",
+        "class-validator": "^0.14.2",
+        "cookie-parser": "^1.4.7",
+        "csurf": "^1.11.0",
+        "dotenv": "^16.4.5",
+        "dotenv-safe": "^9.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^8.0.0"
+    },
+    "devDependencies": {
+        "@nestjs/cli": "^10.0.0",
+        "@nestjs/schematics": "^10.0.0",
+        "@nestjs/testing": "^10.0.0",
+        "@types/bcrypt": "^5.0.0",
+        "@types/cookie-parser": "^1.4.9",
+        "@types/csurf": "^1.11.5",
+        "@types/node": "^20.0.0",
+        "eslint": "^8.0.0",
+        "typescript": "^5.0.0"
+    }
+}
