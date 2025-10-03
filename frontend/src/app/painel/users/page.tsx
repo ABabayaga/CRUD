@@ -2,11 +2,12 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../lib/api";
+import { getUserId } from "@/app/lib/type";
 
 export type User = { _id?: string; id?: string; email: string };
 export type CreateUserDto = { email: string; password: string };
 export type UpdateUserDto = Partial<CreateUserDto>;
-export function getUserId(u: User) { return (u.id || u._id)!; }
+//export function getUserId(u: User) { return (u.id || u._id)!; }
 
 const emptyForm: CreateUserDto = { email: "", password: "" };
 
