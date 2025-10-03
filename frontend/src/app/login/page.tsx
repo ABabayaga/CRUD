@@ -5,6 +5,8 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ensureCsrf } from "../lib/csrf";
 
+const token = await ensureCsrf();
+
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@stoix.com");
@@ -20,7 +22,10 @@ export default function Login() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         method: "POST",
-        headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': await ensureCsrf() },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-XSRF-TOKEN': token, // <— nome precisa bater com o back
+        },
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });

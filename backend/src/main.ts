@@ -14,6 +14,8 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   app.enableCors({
     origin: ['http://localhost:3000', 'https://crud-ten-ebon.vercel.app'],
     credentials: true,
@@ -23,15 +25,12 @@ async function bootstrap() {
 
   // Exige CSRF em métodos "não seguros" (POST/PUT/PATCH/DELETE)
   app.use(
-    (csurf as any)({
+    csurf({
       cookie: {
-        key: 'XSRF-TOKEN',
-        sameSite: 'lax',
-        httpOnly: false, 
-        secure: process.env.NODE_ENV === 'production',
+        httpOnly: false,  // cliente precisa ler para mandar no header
+        sameSite: 'none', // cross-site
+        secure: true,     // necessário em https (Vercel/Render)
       },
-      
-      value: (req: Request) => (req.headers['x-xsrf-token'] as string) || '',
     }),
   );
 
