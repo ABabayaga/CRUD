@@ -1,23 +1,62 @@
 // src/app/lib/api.ts
-import { ensureCsrf } from './csrf';
+import { ensureCsrf } from "./csrf";
 
-export async function apiFetch<T = any>(path: string, opts: RequestInit = {}) {
-  const method = (opts.method || 'GET').toUpperCase();
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(opts.headers as any),
-  };
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
-  const fetchOpts: RequestInit = { ...opts, headers, credentials: 'include' };
+type ApiInit = Omit<RequestInit, "headers"> & {
+  headers?: Record<string, string>;
+  // timeout opcional pra abortar fetch
+  timeoutMs?: number;
+};
 
-  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-    headers['X-XSRF-TOKEN'] = await ensureCsrf();
+export async function apiFetch<T = unknown>(path: string, init: ApiInit = {}) {
+  const method = (init.method ?? "GET").toUpperCase();
+  const headers: Record<string, string> = { ...(init.headers ?? {}) };
+
+  // Monta body e content-type (evita setar para FormData)
+  let body = init.body as BodyInit | undefined;
+  const isMutation = ["POST", "PUT", "PATCH", "DELETE"].includes(method);
+
+  if (isMutation) {
+    // CSRF para mutações
+    headers["X-XSRF-TOKEN"] = await ensureCsrf();
+
+    // Se o body é um objeto comum, serializa
+    if (body && typeof body === "object" && !(body instanceof FormData) && !(body instanceof Blob)) {
+      headers["Content-Type"] ||= "application/json";
+      body = JSON.stringify(body);
+    }
   }
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, fetchOpts);
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(text || `HTTP ${res.status}`);
+  const controller = new AbortController();
+  const timeout = init.timeoutMs
+    ? setTimeout(() => controller.abort(), init.timeoutMs)
+    : undefined;
+
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      method,
+      body,
+      headers,
+      credentials: "include", // importante para cookies (CSRF / sessão)
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      // Tenta extrair mensagem do backend (string ou JSON)
+      let message = `HTTP ${res.status}`;
+      try {
+        const text = await res.text();
+        message = text || message;
+      } catch {}
+      throw new Error(message);
+    }
+
+    if (res.status === 204) return undefined as T;
+    // Se não for JSON válido, pode lançar — mantenha como está se seu backend sempre retorna JSON
+    return (await res.json()) as T;
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
-  return res.status === 204 ? (undefined as any) : ((await res.json()) as T);
 }

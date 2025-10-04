@@ -1,20 +1,26 @@
 // src/app/lib/csrf.ts
-let csrfToken: string | null = null;
+let cached: string | null = null;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 export async function ensureCsrf(): Promise<string> {
-  if (csrfToken) return csrfToken;
+  if (cached) return cached;
 
-  const r = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/csrf-token`, {
-    credentials: 'include',
+  const res = await fetch(`${API_BASE}/csrf-token`, {
+    method: "GET",
+    credentials: "include", // garante cookie do CSRF
+    // cache curto ajuda a evitar chamadas repetidas
+    headers: { "Cache-Control": "no-cache" },
   });
-  if (!r.ok) throw new Error('Falha ao obter CSRF token');
 
-  const data = await r.json();
-  const token = data?.csrfToken;
-  if (!token || typeof token !== 'string') {
-    throw new Error('CSRF token ausente ou inválido');
+  if (!res.ok) {
+    throw new Error(`Falha ao obter CSRF: HTTP ${res.status}`);
   }
 
-  csrfToken = token;
-  return csrfToken; 
+  const data = (await res.json()) as { csrfToken?: string };
+  if (!data?.csrfToken) {
+    throw new Error("CSRF token ausente na resposta.");
+  }
+
+  cached = data.csrfToken;
+  return cached;
 }
